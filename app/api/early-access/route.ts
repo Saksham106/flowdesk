@@ -31,11 +31,13 @@ export async function POST(request: NextRequest) {
   }
 
   if (SHEETS_WEBHOOK) {
-    await fetch(SHEETS_WEBHOOK, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, createdAt: new Date().toISOString() }),
-    }).catch((err) => console.error("[early-access] Sheets webhook error:", err));
+    try {
+      const params = new URLSearchParams({ email, createdAt: new Date().toISOString() });
+      const res = await fetch(`${SHEETS_WEBHOOK}?${params.toString()}`, { method: "GET" });
+      console.log(`[early-access] Sheets response: ${res.status}`);
+    } catch (err) {
+      console.error("[early-access] Sheets webhook error:", err);
+    }
   } else {
     const signups = localRead();
     if (signups.some((s) => s.email === email)) {
